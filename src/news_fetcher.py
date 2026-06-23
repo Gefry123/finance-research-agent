@@ -15,10 +15,21 @@ def fetch_news(ticker: str):
 
 
 def format_headlines(news: list):
-    return [{"title": a["title"], "description": a["description"], "url": a["url"]} for a in news]
+    return [
+        {"title": a["title"], "description": a["description"],
+            "url": a["url"], "content": content}
+        for a in news
+        if (content := scrape_article(a["url"]))
+    ]
 
 
 def scrape_article(url: str):
-    page = requests.get(url)
+    try:
+        page = requests.get(url)
+    except requests.exceptions.RequestException:
+        return None
+    if page.status_code != 200:
+        return None
     soup = BeautifulSoup(page.text, 'html.parser')
-    return soup.get_text()
+
+    return " ".join(soup.get_text().split())
